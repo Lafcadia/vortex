@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex · ARG Pack</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        :root { --ink: #17221f; --muted: #69756f; --line: #d9e1d9; --paper: #f4f7f1; --lime: #d9f36a; --orange: #ff8a5b; }
+        * { box-sizing: border-box; margin: 0; }
+        body { min-height: 100vh; color: var(--ink); background: radial-gradient(circle at 80% 5%, #f8dfc9 0 15%, transparent 40%), var(--paper); font-family: 'Space Grotesk', sans-serif; }
+        main { width: min(1320px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0 56px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 58px; }
+        .brand { display: flex; gap: 10px; align-items: center; font-weight: 700; letter-spacing: -.03em; }
+        .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; color: var(--ink); background: var(--lime); border-radius: 8px 8px 8px 2px; font-weight: 700; }
+        .eyebrow { color: var(--muted); font: 500 12px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+        .topbar a { color: var(--ink); font-size: 13px; text-decoration: none; border-bottom: 1px solid var(--ink); }
+        .intro { margin-bottom: 34px; }
+        h1 { font-size: clamp(48px, 8vw, 92px); line-height: .9; letter-spacing: -.07em; }
+        .intro p { max-width: 570px; margin-top: 18px; color: var(--muted); font-size: 16px; line-height: 1.55; }
+        .editor { display: grid; grid-template-columns: minmax(230px, 1fr) 270px minmax(230px, 1fr); gap: 16px; align-items: start; }
+        .panel { padding: 20px; background: rgba(255,255,255,.78); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 50px rgba(50, 75, 50, .06); }
+        .panel-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .panel-title { font-size: 18px; font-weight: 600; }
+        .panel-number { color: var(--muted); font: 11px 'DM Mono', monospace; }
+        .dropzone, .preview { min-height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 11px; background-color: #e8ede5; background-image: linear-gradient(45deg, #dfe7dd 25%, transparent 25%), linear-gradient(-45deg, #dfe7dd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dfe7dd 75%), linear-gradient(-45deg, transparent 75%, #dfe7dd 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+        .dropzone { flex-direction: column; padding: 24px; text-align: center; border: 1.5px dashed #b9c7b9; cursor: pointer; transition: .2s ease; }
+        .dropzone:hover, .dropzone.is-dragging { border-color: var(--ink); background-color: #edf5d6; transform: translateY(-2px); }
+        .dropzone input { display: none; }
+        .upload-icon { width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 16px; background: var(--lime); border-radius: 50%; font-size: 27px; }
+        .source-preview { display: none; max-width: 100%; max-height: 250px; margin-bottom: 16px; object-fit: contain; border-radius: 8px; }
+        .dropzone strong { margin-bottom: 7px; font-size: 16px; }
+        .dropzone span, .hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
+        .preview img { display: none; max-width: 100%; max-height: 400px; object-fit: contain; }
+        .empty { padding: 24px; color: var(--muted); text-align: center; font-size: 13px; }
+        .empty b { display: block; margin-bottom: 7px; color: var(--ink); font-size: 15px; }
+        .controls { display: grid; gap: 16px; }
+        .control { display: grid; gap: 8px; }
+        .control-label { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font: 11px 'DM Mono', monospace; text-transform: uppercase; }
+        .control-label output { color: var(--ink); }
+        input[type="range"] { width: 100%; accent-color: var(--orange); }
+        .toggle { display: flex; justify-content: space-between; align-items: center; padding-bottom: 2px; color: var(--ink); font-size: 13px; }
+        .toggle input { width: 18px; height: 18px; accent-color: var(--orange); }
+        .crop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .crop-grid label { display: grid; gap: 5px; color: var(--muted); font: 10px 'DM Mono', monospace; }
+        .crop-grid input { width: 100%; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: white; font: 12px 'DM Mono', monospace; }
+        .actions { display: flex; gap: 8px; margin-top: 4px; }
+        button, .download { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; padding: 0 13px; color: var(--ink); background: white; font: 500 12px 'Space Grotesk', sans-serif; cursor: pointer; }
+        button:hover, .download:hover { border-color: var(--ink); }
+        .download { display: inline-flex; align-items: center; justify-content: center; flex: 1; background: var(--lime); text-decoration: none; }
+        .error { min-height: 18px; margin-top: 12px; color: #b34425; font-size: 12px; }
+        @media (max-width: 980px) { .editor { grid-template-columns: 1fr 1fr; } .controls-panel { grid-column: 1 / -1; grid-row: 1; } .controls { grid-template-columns: repeat(3, 1fr); } .actions { grid-column: 1 / -1; } }
+        @media (max-width: 680px) { main { width: min(100% - 28px, 560px); padding-top: 24px; } .topbar { margin-bottom: 42px; } .editor, .controls { grid-template-columns: 1fr; } .controls-panel { grid-column: auto; grid-row: auto; } .dropzone, .preview { min-height: 290px; } h1 { font-size: 58px; } }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="topbar"><div class="brand"><span class="brand-mark">V</span> VORTEX</div><div><span class="eyebrow">ARG PACK / 02</span> · <a href="/"> 转换器</a></div></div>
+        <section class="editor">
+            <article class="panel">
+                <div class="panel-head"><div class="panel-title">原图</div><span class="panel-number">01 / SOURCE</span></div>
+                <label class="dropzone" id="dropzone" for="file-input"><input id="file-input" type="file" accept="image/*"><img class="source-preview" id="source-preview" alt="原图预览"><div class="upload-icon" id="upload-icon">↑</div><strong id="upload-title">拖拽图片到这里</strong><span id="upload-hint">点击选择，或直接粘贴图片</span></label>
+                <div class="error" id="error" role="alert"></div>
+            </article>
+            <article class="panel controls-panel">
+                <div class="panel-head"><div class="panel-title">调制台</div><span class="panel-number">02 / TUNE</span></div>
+                <div class="controls">
+                    <label class="toggle">反色 <input id="invert" type="checkbox"></label>
+                    <label class="control"><span class="control-label">对比度 <output id="contrast-value">1.00</output></span><input id="contrast" type="range" min="0" max="3" step=".05" value="1"></label>
+                    <label class="control"><span class="control-label">清晰度 <output id="sharpness-value">1.00</output></span><input id="sharpness" type="range" min="0" max="4" step=".05" value="1"></label>
+                    <label class="control"><span class="control-label">模糊化 <output id="blur-value">0 px</output></span><input id="blur" type="range" min="0" max="20" step=".5" value="0"></label>
+                    <label class="control"><span class="control-label">曝光 <output id="exposure-value">1.00</output></span><input id="exposure" type="range" min="0" max="3" step=".05" value="1"></label>
+                    <label class="control"><span class="control-label">色调 <output id="hue-value">0°</output></span><input id="hue" type="range" min="-180" max="180" step="1" value="0"></label>
+                    <label class="control"><span class="control-label">饱和度 <output id="saturation-value">1.00</output></span><input id="saturation" type="range" min="0" max="3" step=".05" value="1"></label>
+                    <div class="control"><span class="control-label">裁剪</span><div class="crop-grid"><label>X <input id="crop-x" type="number" min="0" value="0"></label><label>Y <input id="crop-y" type="number" min="0" value="0"></label><label>宽 <input id="crop-width" type="number" min="1" value="1"></label><label>高 <input id="crop-height" type="number" min="1" value="1"></label></div></div>
+                    <div class="actions"><button id="reset" type="button">重置</button><a class="download" id="download" download="arg-pack-edit.png" href="#">↓ 下载 PNG</a></div>
+                </div>
+            </article>
+            <article class="panel">
+                <div class="panel-head"><div class="panel-title">编辑结果</div><span class="panel-number">03 / RESULT</span></div>
+                <div class="preview"><div class="empty" id="empty"><b>成果</b><span>上传图片后开始调整</span></div><img id="result" alt="编辑后的图片"></div>
+            </article>
+        </section>
+    </main>
+    <script>
+        const dropzone = document.querySelector('#dropzone');
+        const fileInput = document.querySelector('#file-input');
+        const result = document.querySelector('#result');
+        const empty = document.querySelector('#empty');
+        const download = document.querySelector('#download');
+        const error = document.querySelector('#error');
+        const controls = ['invert', 'contrast', 'sharpness', 'blur', 'exposure', 'hue', 'saturation'];
+        let sourceFile;
+        let outputUrl;
+        let sourceUrl;
+        let requestNumber = 0;
+
+        function setValueLabels() {
+            document.querySelector('#contrast-value').textContent = Number(document.querySelector('#contrast').value).toFixed(2);
+            document.querySelector('#sharpness-value').textContent = Number(document.querySelector('#sharpness').value).toFixed(2);
+            document.querySelector('#blur-value').textContent = `${document.querySelector('#blur').value} px`;
+            document.querySelector('#exposure-value').textContent = Number(document.querySelector('#exposure').value).toFixed(2);
+            document.querySelector('#hue-value').textContent = `${document.querySelector('#hue').value}°`;
+            document.querySelector('#saturation-value').textContent = Number(document.querySelector('#saturation').value).toFixed(2);
+        }
+        function setCropBounds(width, height) {
+            document.querySelector('#crop-width').value = width;
+            document.querySelector('#crop-height').value = height;
+            document.querySelector('#crop-width').max = width;
+            document.querySelector('#crop-height').max = height;
+            document.querySelector('#crop-x').max = Math.max(0, width - 1);
+            document.querySelector('#crop-y').max = Math.max(0, height - 1);
+        }
+        function loadFile(file) {
+            if (!file || !file.type.startsWith('image/')) { error.textContent = '选择有效的图片文件。'; return; }
+            sourceFile = file;
+            error.textContent = '';
+            const image = new Image();
+            image.onload = () => setCropBounds(image.naturalWidth, image.naturalHeight);
+            image.src = URL.createObjectURL(file);
+            if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+            sourceUrl = URL.createObjectURL(file);
+            document.querySelector('#source-preview').src = sourceUrl;
+            document.querySelector('#source-preview').style.display = 'block';
+            document.querySelector('#upload-icon').style.display = 'none';
+            document.querySelector('#upload-title').textContent = file.name;
+            document.querySelector('#upload-hint').textContent = '点击、拖拽或粘贴可更换图片';
+            render();
+        }
+        async function render() {
+            if (!sourceFile) return;
+            const currentRequest = ++requestNumber;
+            const formData = new FormData();
+            formData.append('image', sourceFile);
+            controls.forEach(id => { const element = document.querySelector(`#${id}`); formData.append(id, element.type === 'checkbox' ? String(element.checked) : element.value); });
+            ['crop-x', 'crop-y', 'crop-width', 'crop-height'].forEach(id => formData.append(id.replace('-', '_'), document.querySelector(`#${id}`).value));
+            empty.textContent = '正在生成…'; empty.style.display = 'block'; result.style.display = 'none';
+            try {
+                const response = await fetch('/api/edit', { method: 'POST', body: formData });
+                if (!response.ok) { const data = await response.json(); throw new Error(data.error || '图片编辑失败。'); }
+                const blob = await response.blob();
+                if (currentRequest !== requestNumber) return;
+                if (outputUrl) URL.revokeObjectURL(outputUrl);
+                outputUrl = URL.createObjectURL(blob); result.src = outputUrl; result.style.display = 'block'; empty.style.display = 'none'; download.href = outputUrl;
+            } catch (editError) { if (currentRequest === requestNumber) { empty.textContent = '暂时无法生成成果'; error.textContent = editError.message; } }
+        }
+        function reset() { document.querySelector('#invert').checked = false; [['contrast', 1], ['sharpness', 1], ['blur', 0], ['exposure', 1], ['hue', 0], ['saturation', 1]].forEach(([id, value]) => { document.querySelector(`#${id}`).value = value; }); if (sourceFile) { const image = new Image(); image.onload = () => { setCropBounds(image.naturalWidth, image.naturalHeight); render(); }; image.src = URL.createObjectURL(sourceFile); } setValueLabels(); }
+        fileInput.addEventListener('change', event => loadFile(event.target.files[0]));
+        ['dragenter', 'dragover'].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add('is-dragging'); }));
+        ['dragleave', 'drop'].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove('is-dragging'); }));
+        dropzone.addEventListener('drop', event => loadFile(event.dataTransfer.files[0]));
+        document.addEventListener('paste', event => { const item = [...event.clipboardData.items].find(entry => entry.type.startsWith('image/')); if (item) loadFile(item.getAsFile()); });
+        controls.forEach(id => document.querySelector(`#${id}`).addEventListener('input', () => { setValueLabels(); render(); }));
+        ['crop-x', 'crop-y', 'crop-width', 'crop-height'].forEach(id => document.querySelector(`#${id}`).addEventListener('change', render));
+        document.querySelector('#reset').addEventListener('click', reset);
+        setValueLabels();
+    </script>
+</body>
+</html>

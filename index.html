@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex · 图片转换</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        :root { --ink: #17221f; --muted: #69756f; --line: #d9e1d9; --paper: #f4f7f1; --lime: #d9f36a; --orange: #ff8a5b; }
+        * { box-sizing: border-box; margin: 0; }
+        body { min-height: 100vh; color: var(--ink); background: radial-gradient(circle at 15% 10%, #e8f2d4 0 18%, transparent 42%), var(--paper); font-family: 'Space Grotesk', sans-serif; }
+        main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 56px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 76px; }
+        .brand { display: flex; gap: 10px; align-items: center; font-weight: 700; letter-spacing: -.03em; }
+        .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; color: var(--ink); background: var(--lime); border-radius: 8px 8px 8px 2px; font-weight: 700; }
+        .eyebrow { color: var(--muted); font: 500 12px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+        .intro { max-width: 740px; margin-bottom: 42px; }
+        h1 { max-width: 680px; font-size: clamp(42px, 7vw, 82px); line-height: .95; letter-spacing: -.07em; margin: 12px 0 22px; }
+        .intro p { max-width: 510px; color: var(--muted); font-size: 17px; line-height: 1.6; }
+        .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .card { min-height: 500px; padding: 25px; background: rgba(255,255,255,.75); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 50px rgba(50, 75, 50, .06); }
+        .card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+        .card-title { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
+        .card-number { color: var(--muted); font: 12px 'DM Mono', monospace; }
+        .dropzone { min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; text-align: center; border: 1.5px dashed #b9c7b9; border-radius: 13px; background: rgba(245, 249, 240, .8); cursor: pointer; transition: .2s ease; }
+        .dropzone:hover, .dropzone.is-dragging { border-color: var(--ink); background: #edf5d6; transform: translateY(-2px); }
+        .upload-icon { width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 18px; color: var(--ink); background: var(--lime); border-radius: 50%; font-size: 27px; }
+        .source-preview { display: none; max-width: 100%; max-height: 220px; margin-bottom: 18px; object-fit: contain; border-radius: 8px; }
+        .dropzone strong { display: block; margin-bottom: 8px; font-size: 17px; }
+        .dropzone span { color: var(--muted); font-size: 13px; }
+        .dropzone input { display: none; }
+        .preview-wrap { min-height: 380px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 13px; background-color: #e8ede5; background-image: linear-gradient(45deg, #dfe7dd 25%, transparent 25%), linear-gradient(-45deg, #dfe7dd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dfe7dd 75%), linear-gradient(-45deg, transparent 75%, #dfe7dd 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+        .preview-wrap img { display: none; max-width: 100%; max-height: 380px; object-fit: contain; }
+        .empty-state { padding: 25px; text-align: center; color: var(--muted); }
+        .empty-state b { display: block; margin-bottom: 8px; color: var(--ink); font-size: 16px; }
+        .result-tools { display: none; align-items: center; justify-content: space-between; gap: 12px; margin-top: 17px; }
+        .result-tools.visible { display: flex; }
+        .format-control { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 12px 'DM Mono', monospace; }
+        select, .download { height: 40px; border: 1px solid var(--line); border-radius: 8px; font: 500 13px 'Space Grotesk', sans-serif; }
+        select { padding: 0 28px 0 10px; color: var(--ink); background: white; }
+        .download { display: inline-flex; align-items: center; gap: 8px; padding: 0 15px; color: var(--ink); background: var(--lime); text-decoration: none; cursor: pointer; transition: .2s ease; }
+        .download:hover { background: #c7e44f; transform: translateY(-1px); }
+        .meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; color: var(--muted); font: 11px 'DM Mono', monospace; }
+        .error { min-height: 18px; margin-top: 12px; color: #b34425; font-size: 12px; }
+        @media (max-width: 760px) { main { width: min(100% - 28px, 580px); padding-top: 24px; } .topbar { margin-bottom: 50px; } .cards { grid-template-columns: 1fr; } .card { min-height: auto; } .dropzone, .preview-wrap { min-height: 300px; } h1 { font-size: 52px; } }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="topbar"><div class="brand"><span class="brand-mark">V</span> VORTEX</div><div><span class="eyebrow">IMAGE CONVERTER / 01</span> · <a href="/arg-pack" style="color: var(--ink); font-size: 13px; text-decoration: none; border-bottom: 1px solid var(--ink);"> ARG Pack</a></div></div>
+        <section class="cards">
+            <article class="card">
+                <div class="card-head"><div class="card-title">放入原图</div><span class="card-number">01 / INPUT</span></div>
+                <label class="dropzone" id="dropzone" for="file-input">
+                    <input id="file-input" type="file" accept="image/*">
+                    <img class="source-preview" id="source-preview" alt="原图预览"><div class="upload-icon" id="upload-icon">↑</div><strong id="upload-title">拖拽图片到这里</strong><span id="upload-hint">也可以点击选择，或直接粘贴图片</span>
+                </label>
+                <div class="meta"><span id="source-name">等待图片</span><span id="source-size">—</span></div>
+                <div class="error" id="error" role="alert"></div>
+            </article>
+            <article class="card">
+                <div class="card-head"><div class="card-title">导出成果</div><span class="card-number">02 / OUTPUT</span></div>
+                <div class="preview-wrap"><div class="empty-state" id="empty-state"><b>成品会出现在这里</b><span>上传后即可预览与下载</span></div><img id="result-image" alt="转换后的图片"></div>
+                <div class="result-tools" id="result-tools"><label class="format-control" for="format-select">格式 <select id="format-select"><option value="png">PNG</option><option value="jpg">JPG</option><option value="webp">WEBP</option><option value="ico">ICO</option><option value="svg">SVG</option><option value="tiff">TIFF</option></select></label><a class="download" id="download" download="vortex-image.png" href="#">↓ 下载图片</a></div>
+            </article>
+        </section>
+    </main>
+    <script>
+        const dropzone = document.querySelector('#dropzone');
+        const fileInput = document.querySelector('#file-input');
+        const resultImage = document.querySelector('#result-image');
+        const emptyState = document.querySelector('#empty-state');
+        const resultTools = document.querySelector('#result-tools');
+        const formatSelect = document.querySelector('#format-select');
+        const download = document.querySelector('#download');
+        const sourceName = document.querySelector('#source-name');
+        const sourceSize = document.querySelector('#source-size');
+        const errorMessage = document.querySelector('#error');
+        let sourceFile;
+        let outputUrl;
+        let sourceUrl;
+
+        function formatBytes(bytes) { if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`; return `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
+        async function handleFiles(files) { const file = files[0]; if (!file) return; if (!file.type.startsWith('image/')) { errorMessage.textContent = '请选择有效的图片文件。'; return; } errorMessage.textContent = ''; sourceFile = file; sourceName.textContent = file.name; sourceSize.textContent = formatBytes(file.size); if (sourceUrl) URL.revokeObjectURL(sourceUrl); sourceUrl = URL.createObjectURL(file); const sourcePreview = document.querySelector('#source-preview'); sourcePreview.src = sourceUrl; sourcePreview.style.display = 'block'; document.querySelector('#upload-icon').style.display = 'none'; document.querySelector('#upload-title').textContent = '更换图片'; document.querySelector('#upload-hint').textContent = '点击、拖拽或粘贴新的图片'; await renderResult(); }
+        async function renderResult() { const formData = new FormData(); formData.append('image', sourceFile); formData.append('format', formatSelect.value); resultTools.classList.remove('visible'); emptyState.textContent = '正在转换…'; emptyState.style.display = 'block'; resultImage.style.display = 'none'; try { const response = await fetch('/api/convert', { method: 'POST', body: formData }); if (!response.ok) { const data = await response.json(); throw new Error(data.error || '图片转换失败。'); } const blob = await response.blob(); if (outputUrl) URL.revokeObjectURL(outputUrl); outputUrl = URL.createObjectURL(blob); resultImage.src = outputUrl; resultImage.style.display = 'block'; emptyState.style.display = 'none'; resultTools.classList.add('visible'); const extension = formatSelect.value; download.href = outputUrl; download.download = `vortex-${Date.now()}.${extension}`; } catch (error) { emptyState.textContent = '暂时无法生成成果'; errorMessage.textContent = error.message; } }
+        fileInput.addEventListener('change', event => handleFiles(event.target.files));
+        ['dragenter', 'dragover'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); dropzone.classList.add('is-dragging'); }));
+        ['dragleave', 'drop'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); dropzone.classList.remove('is-dragging'); }));
+        dropzone.addEventListener('drop', event => handleFiles(event.dataTransfer.files));
+        document.addEventListener('paste', event => { const image = [...event.clipboardData.items].find(item => item.type.startsWith('image/')); if (image) handleFiles([image.getAsFile()]); });
+        formatSelect.addEventListener('change', () => { if (sourceFile) renderResult(); });
+    </script>
+</body>
+</html>
